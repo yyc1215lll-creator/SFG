@@ -1,0 +1,13 @@
+# Tested runtime versions; install an appropriate CUDA build of PyTorch first.
+# Integration tests used an existing environment, not a fresh pip installation.
+torch==2.6.0
+torchvision==0.21.0
+diffusers==0.35.0
+transformers==4.57.1
+accelerate==1.14.0
+safetensors==0.8.0
+sentencepiece==0.2.0
+protobuf==4.25.3
+numpy==1.26.4
+Pillow==11.3.0
+peft==0.17.0

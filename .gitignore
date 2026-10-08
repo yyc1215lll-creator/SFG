@@ -1,0 +1,49 @@
+# Local environments and Python build artifacts
+.venv*/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+
+# Credentials and machine-local configuration
+.env
+.env.*
+!.env.example
+.netrc
+*.pem
+*.key
+.cache/
+.huggingface/
+.vscode/
+.idea/
+.DS_Store
+
+# Weights, generated data, manifests, logs and local benchmark assets
+/models/
+/weights/
+/checkpoints/
+/datasets/
+/outputs/
+/logs/
+/wandb/
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.bin
+*.mp4
+*.gif
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.jsonl
+*.log
+*.zip
+*.tar
+*.tar.gz
+
+# Evidence and source JSON files are intentionally versioned.

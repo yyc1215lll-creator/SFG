@@ -1,0 +1,15 @@
+SFG research inference source release
+
+This distribution includes third-party software. Original copyright and license
+notices remain in the corresponding files and directories. See
+THIRD_PARTY_NOTICES.md for the source and license boundaries.
+
+Tencent Hunyuan is licensed under the Tencent Hunyuan Community License
+Agreement, Copyright © 2025 Tencent. All Rights Reserved. The trademark rights
+of “Tencent Hunyuan” are owned by Tencent or its affiliate.
+
+The FLUX de-distill pipeline contains Hugging Face Diffusers-derived code under
+the Apache License, Version 2.0. Its original source header is retained.
+
+No model weights or rights to third-party model weights are granted by this
+source distribution.
