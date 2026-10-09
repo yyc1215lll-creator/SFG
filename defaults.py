@@ -21,7 +21,7 @@ IMAGE_DEFAULTS = {
 VIDEO_DEFAULTS = {
     "t2v": dict(steps=25, guidance=1.0, u_s=0.25, u_x=-0.25,
                 omega=4.0, active_steps=7, condition_scope="joint_encoder"),
-    "i2v": dict(steps=25, guidance=1.0, u_s=0.275, u_x=-0.275,
+    "i2v": dict(steps=25, guidance=1.0, u_s=0.40, u_x=-0.40,
                 omega=6.0, active_steps=7, condition_scope="joint_encoder"),
     # Preserve reference-image semantic tokens in the text-only variant.
     "i2v-text": dict(steps=25, guidance=1.0, u_s=0.20, u_x=-0.20,
