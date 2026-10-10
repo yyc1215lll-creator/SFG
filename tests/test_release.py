@@ -6,11 +6,13 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from defaults import IMAGE_DEFAULTS, VIDEO_DEFAULTS
+from run_image import sd3_sfg_options
 
 
 def cli(script, *arguments):
@@ -100,17 +102,17 @@ class ReleaseTests(unittest.TestCase):
 
     def test_default_parameter_values(self):
         image_values = {
-            "sd3m": (40, 1.0, 0.15, -0.40, 6.0, 1, 0),
-            "sd35m": (40, 7.5, 0.25, -0.25, 3.5, 1, 20),
+            "sd3m": (40, 1.0, 0.0, -0.50, 12.0, 1, 13),
+            "sd35m": (40, 7.5, 0.25, -0.25, 3.5, 1, 10),
             "flux-dev": (28, 1.0, 0.35, -0.35, 14.0, 1, 0),
-            "flux-de-distill": (28, 3.5, 0.35, -0.45, 7.5, 1, 0),
+            "flux-de-distill": (28, 3.5, 0.35, -0.40, 6.0, 1, 6),
         }
         keys = ("steps", "guidance", "u_s", "u_x", "omega", "start_step", "end_step")
         for model, expected in image_values.items():
             self.assertEqual(tuple(IMAGE_DEFAULTS[model][key] for key in keys), expected)
         video_values = {
             "t2v": (25, 1.0, 0.25, -0.25, 4.0, 7, "joint_encoder"),
-            "i2v": (25, 1.0, 0.275, -0.275, 6.0, 7, "joint_encoder"),
+            "i2v": (25, 1.0, 0.40, -0.40, 6.0, 7, "joint_encoder"),
             "i2v-text": (25, 1.0, 0.20, -0.20, 3.0, 7, "text_only"),
         }
         keys = ("steps", "guidance", "u_s", "u_x", "omega", "active_steps", "condition_scope")
@@ -121,6 +123,69 @@ class ReleaseTests(unittest.TestCase):
         for script in ("run_image.py", "run_video.py"):
             with self.subTest(script=script):
                 self.assertIn("SFG", cli(script, "--help"))
+
+    def test_sd3_sampler_options(self):
+        one_sided = sd3_sfg_options(IMAGE_DEFAULTS["sd3m"], "all")
+        self.assertEqual(one_sided["bridge_direction"], "text_to_image")
+        self.assertEqual(one_sided["sfg_strength_u"], -0.50)
+        self.assertIsNone(one_sided["sfg_strength_u_t2i"])
+        both = sd3_sfg_options(IMAGE_DEFAULTS["sd35m"], "all")
+        self.assertEqual(both["bridge_direction"], "both")
+        self.assertEqual(both["sfg_strength_u"], 0.25)
+        self.assertEqual(both["sfg_strength_u_t2i"], -0.25)
+        for model in ("sd3m", "sd35m"):
+            config = IMAGE_DEFAULTS[model]
+            options = sd3_sfg_options(config, "all")
+            self.assertEqual(options["bridge_start_step"], config["start_step"])
+            self.assertEqual(options["bridge_end_step"], config["end_step"])
+            self.assertEqual(options["bridge_omega"], config["omega"])
+            self.assertEqual(options["bridge_layers"], "all")
+
+    def test_sd3_attention_strength_mapping(self):
+        # Exercise the actual processor initializer without importing GPU packages.
+        path = ROOT / "image/sd3/latent_sd35.py"
+        tree = ast.parse(path.read_text())
+        processor = next(node for node in tree.body if isinstance(node, ast.ClassDef)
+                         and node.name == "SFGJointAttnProcessor2_0")
+        methods = [node for node in processor.body if isinstance(node, ast.FunctionDef)
+                   and node.name in ("__init__", "_normalize_bridge_direction")]
+        minimal = ast.ClassDef(name="Processor", bases=[], keywords=[], body=methods,
+                               decorator_list=[])
+        module = ast.fix_missing_locations(ast.Module(body=[minimal], type_ignores=[]))
+        namespace = {"F": SimpleNamespace(scaled_dot_product_attention=None)}
+        exec(compile(module, str(path), "exec"), namespace)
+        for model in ("sd3m", "sd35m"):
+            config = IMAGE_DEFAULTS[model]
+            options = sd3_sfg_options(config, "all")
+            instance = namespace["Processor"](**{key: options[key] for key in (
+                "sfg_strength_u", "sfg_strength_u_t2i", "bridge_direction")})
+            self.assertEqual(instance.bridge_scale_delta_i2t, -config["u_s"])
+            self.assertEqual(instance.bridge_scale_delta_t2i, -config["u_x"])
+
+    def test_sampling_window_boundaries(self):
+        for model, config in IMAGE_DEFAULTS.items():
+            if model.startswith("sd3"):
+                path = ROOT / "image/sd3/latent_sd35.py"
+                name = "_use_sfg_this_step"
+            else:
+                filename = "flux_dev.py" if model == "flux-dev" else "flux_dedistill.py"
+                path = ROOT / "image" / filename
+                name = "use_bridge_step"
+            tree = ast.parse(path.read_text())
+            function = next(node for node in ast.walk(tree)
+                            if isinstance(node, ast.FunctionDef) and node.name == name)
+            function.decorator_list = []
+            module = ast.fix_missing_locations(ast.Module(body=[function], type_ignores=[]))
+            namespace = {}
+            exec(compile(module, str(path), "exec"), namespace)
+            active = [step + 1 for step in range(config["steps"])
+                      if namespace[name](step, config["start_step"], config["end_step"])]
+            end = config["end_step"] or config["steps"]
+            self.assertEqual(active, list(range(config["start_step"], end + 1)))
+            self.assertFalse(namespace[name](0, 2, 3))
+            self.assertTrue(namespace[name](1, 2, 3))
+            self.assertTrue(namespace[name](2, 2, 3))
+            self.assertFalse(namespace[name](3, 2, 3))
 
 
 if __name__ == "__main__":

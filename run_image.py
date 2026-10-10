@@ -15,6 +15,21 @@ from defaults import IMAGE_DEFAULTS
 ROOT = Path(__file__).resolve().parent
 
 
+def sd3_sfg_options(config, layers):
+    """Map public strengths to the SD3 sampler's directional arguments."""
+    options = dict(
+        sfg_mode="explicit", bridge_variant="explicit", bridge_direction="both",
+        sfg_strength_u=config["u_s"], sfg_strength_u_t2i=config["u_x"],
+        bridge_omega=config["omega"], bridge_normclip_tau=999.0, bridge_orthogonal=False,
+        bridge_start_step=config["start_step"], bridge_end_step=config["end_step"],
+        bridge_layers=layers)
+    if config["u_s"] == 0.0 and config["u_x"] != 0.0:
+        # A one-sided sampler call uses its primary strength for the chosen side.
+        options.update(bridge_direction="text_to_image",
+                       sfg_strength_u=config["u_x"], sfg_strength_u_t2i=None)
+    return options
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", choices=IMAGE_DEFAULTS, default="sd35m")
@@ -106,12 +121,7 @@ def main() -> None:
         indices = list(range(rank, count, world))
         for offset in range(0, len(indices), args.batch_size):
             batch = indices[offset:offset + args.batch_size]
-            extra = {} if args.baseline else dict(
-                sfg_mode="explicit", bridge_variant="explicit", bridge_direction="both",
-                sfg_strength_u=config["u_s"], sfg_strength_u_t2i=config["u_x"],
-                bridge_omega=config["omega"], bridge_normclip_tau=999.0, bridge_orthogonal=False,
-                bridge_start_step=config["start_step"], bridge_end_step=config["end_step"],
-                bridge_layers=args.layers)
+            extra = {} if args.baseline else sd3_sfg_options(config, args.layers)
             images = solver.sample(prompt=[[args.negative_prompt] * len(batch), [prompts[i] for i in batch]],
                                    cfg_guidance=config["guidance"], target_size=(args.height, args.width),
                                    generator=[torch.Generator(device=device).manual_seed(args.seed+i) for i in batch],

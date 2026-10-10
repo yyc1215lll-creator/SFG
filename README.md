@@ -86,8 +86,7 @@ python run_image.py --model flux-de-distill --weights /path/to/FLUX.1-dev \
 ```
 
 Images are saved to `OUTPUT/result/`. Use a fresh output directory for each run.
-The default batch size is 4; use `--batch-size 1` to reduce memory usage.
-The seed for each image is `--seed + image index`.
+Use `--batch-size 1` to reduce memory usage.
 
 ## Video generation
 
@@ -118,24 +117,6 @@ torchrun --standalone --nproc_per_node=1 run_video.py --task i2v-text \
 ```
 
 Use `--offloading` to enable model offloading or `--resume` to resume a run.
-
-## Configuration
-
-Model-specific defaults are provided in [defaults.py](defaults.py).
-Standard generation does not require manually setting guidance parameters.
-
-| Model / task | CFG / g | uS | uX | w | Steps | SFG window |
-|---|---:|---:|---:|---:|---:|---|
-| SD3M | 1 | +0.15 | −0.40 | 6 | 40 | 1–40 |
-| SD3.5M | 7.5 | +0.25 | −0.25 | 3.5 | 40 | 1–20 |
-| FLUX-dev | 1 | +0.35 | −0.35 | 14 | 28 | 1–28 |
-| FLUX-de-distill | 3.5 | +0.35 | −0.45 | 7.5 | 28 | 1–28 |
-| T2V | 1 | +0.25 | −0.25 | 4 | 25 | 1–7 |
-| I2V | 1 | +0.275 | −0.275 | 6 | 25 | 1–7 |
-| I2V text-only | 1 | +0.20 | −0.20 | 3 | 25 | 1–7 |
-
-Image defaults use BF16, 1024×1024 resolution, and seed 42.
-Video defaults use BF16, 848×480 resolution, 121 frames, and 24 FPS.
 
 ## Multi-GPU generation
 

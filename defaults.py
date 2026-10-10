@@ -6,16 +6,16 @@ Windows are 1-based inclusive; end_step=0 means the final step.
 """
 
 IMAGE_DEFAULTS = {
-    "sd3m": dict(steps=40, guidance=1.0, u_s=0.15, u_x=-0.40,
-                 omega=6.0, start_step=1, end_step=0),
+    "sd3m": dict(steps=40, guidance=1.0, u_s=0.0, u_x=-0.50,
+                 omega=12.0, start_step=1, end_step=13),
     "sd35m": dict(steps=40, guidance=7.5, u_s=0.25, u_x=-0.25,
-                  omega=3.5, start_step=1, end_step=20),
+                  omega=3.5, start_step=1, end_step=10),
     # Original FLUX-dev uses its embedded guidance input.
     "flux-dev": dict(steps=28, guidance=1.0, u_s=0.35, u_x=-0.35,
                      omega=14.0, start_step=1, end_step=0),
     # De-distilled transformer weights with two-branch CFG.
-    "flux-de-distill": dict(steps=28, guidance=3.5, u_s=0.35, u_x=-0.45,
-                            omega=7.5, start_step=1, end_step=0),
+    "flux-de-distill": dict(steps=28, guidance=3.5, u_s=0.35, u_x=-0.40,
+                            omega=6.0, start_step=1, end_step=6),
 }
 
 VIDEO_DEFAULTS = {
