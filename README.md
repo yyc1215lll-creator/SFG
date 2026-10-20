@@ -4,6 +4,8 @@
 SFG provides inference-time guidance for image and video generation, without
 fine-tuning or additional learned weights.
 
+**Paper:** [Images Talk Back: Guiding MMDiTs by Suppressing Image-to-Text Feedback](https://arxiv.org/abs/2610.13941)
+
 **Supported models:** SD3 Medium · SD3.5 Medium · FLUX.1-dev ·
 FLUX-de-distill · HunyuanVideo-1.5 (T2V / I2V)
 
@@ -124,6 +126,21 @@ For image generation, replace `python` with
 `torchrun --standalone --nproc_per_node=8`.
 For video generation, set `--nproc_per_node=8` with a multi-row manifest.
 Each GPU loads a complete model and processes independent samples.
+
+## Citation
+
+If you find this work useful, please cite our paper:
+
+```bibtex
+@article{yang2026imagestalkback,
+  title={Images Talk Back: Guiding {MMDiTs} by Suppressing Image-to-Text Feedback},
+  author={Yang, Yucheng and Sun, Xiaoxiao and Yang, Shusheng and Chen, Jiakang and Yeung-Levy, Serena},
+  journal={arXiv preprint arXiv:2610.13941},
+  year={2026},
+  doi={10.48550/arXiv.2610.13941},
+  url={https://arxiv.org/abs/2610.13941}
+}
+```
 
 ## Acknowledgments
 
